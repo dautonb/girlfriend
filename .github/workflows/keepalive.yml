@@ -1,0 +1,32 @@
+name: "🔧 Keepalive (giữ lịch chạy sống)"
+
+# GitHub tự TẮT lịch cron của các repo không có commit nào trong 60 ngày.
+# Bot 2.0 không commit gì vào repo (nhật ký nằm ở Gist), nên workflow nhỏ
+# này tự tạo 1 commit mỗi tuần để lịch "trực tổng đài" không bao giờ bị ngủ quên.
+
+on:
+  schedule:
+    - cron: "30 20 * * 6"   # Thứ Bảy 20:30 UTC = Chủ nhật 03:30 giờ Việt Nam
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: "🔧 Commit giữ nhịp"
+        run: |
+          git config user.name "girlfriend-bot"
+          git config user.email "bot@users.noreply.github.com"
+          echo "Keepalive: $(date -u '+%Y-%m-%d %H:%M UTC')" > .keepalive
+          git add .keepalive
+          if git diff --cached --quiet; then
+            echo "Không cần commit."
+          else
+            git commit -m "🔧 Keepalive [skip ci]"
+            git pull --rebase origin ${{ github.ref_name }}
+            git push origin HEAD:${{ github.ref_name }}
+          fi
