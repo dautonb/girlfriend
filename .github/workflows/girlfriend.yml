@@ -1,0 +1,59 @@
+name: "💌 Bạn gái luôn online"
+
+# ═══════════════════════════════════════════════════════════════
+# KIẾN TRÚC "TRỰC TỔNG ĐÀI" (bản 2.0):
+#   - 6 ca trực/ngày, mỗi ca ~3h48m ⇒ phủ ~24/7
+#   - Mỗi ca: long-poll Telegram → anh nhắn lúc nào, Bơ trả lời
+#     trong vài GIÂY (không còn chờ lịch như bản cũ)
+#   - Tin nhắn chủ động 8h / 13h / 18h / 23h (giờ VN) do chính ca
+#     trực gửi đúng giờ; nếu lỡ trễ sẽ được "gửi bù" kèm lời xin lỗi
+#   - Nhật ký trò chuyện lưu ở SECRET GIST (qua GH_GIST_TOKEN)
+#     ⇒ repo public mà tin nhắn vẫn kín đáo
+#
+# KHUNG GIỜ CA (cron theo UTC, VN = UTC + 7):
+#   00/04/08/12/16/20 UTC = 07/11/15/19/23/03 giờ VN
+#   Giữa 2 ca có khoảng nghỉ ~12 phút — tin nhắn gửi trong lúc đó
+#   được trả lời ngay khi ca sau bắt đầu.
+# ═══════════════════════════════════════════════════════════════
+
+on:
+  schedule:
+    - cron: "0 */4 * * *"   # 6 ca trực/ngày (07h, 11h, 15h, 19h, 23h, 03h giờ VN)
+  workflow_dispatch:        # nút "Run workflow" để chạy thử thủ công
+
+permissions:
+  contents: write           # dùng cho file keepalive
+
+concurrency:
+  group: girlfriend-bot
+  cancel-in-progress: true  # ca mới lên thì ca cũ về, không tranh nhau getUpdates
+
+jobs:
+  tructongdai:
+    name: "💌 Bơ trực tổng đài"
+    runs-on: ubuntu-latest
+    timeout-minutes: 235    # chắc chắn dừng trước khi ca sau bắt đầu (4h)
+    steps:
+      - name: "📥 Lấy code"
+        uses: actions/checkout@v4
+
+      - name: "🐍 Cài Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: "📦 Cài thư viện"
+        run: pip install -r requirements.txt
+
+      - name: "💌 Bơ lên ca trực"
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          GH_GIST_TOKEN: ${{ secrets.GH_GIST_TOKEN }}   # PAT scope gist — bộ nhớ vô hạn
+          # Tùy chọn (đặt trong tab "Variables" nếu muốn đổi):
+          NICKNAME: ${{ vars.NICKNAME }}         # em gọi anh là gì (mặc định: anh yêu)
+          GIRL_NAME: ${{ vars.GIRL_NAME }}       # tên của em (mặc định: Bơ)
+          CONTEXT_LIMIT: ${{ vars.CONTEXT_LIMIT }} # số tin đọc lại khi trả lời (mặc định: 50)
+          POLL_HOURS: ${{ vars.POLL_HOURS }}     # độ dài ca trực (mặc định: 3.8)
+        run: python src/main.py
