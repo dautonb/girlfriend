@@ -38,8 +38,8 @@ DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-chat")
 
 NICKNAME = (os.environ.get("NICKNAME") or "anh yêu").strip()   # Em gọi anh là gì
 GIRL_NAME = (os.environ.get("GIRL_NAME") or "Bơ").strip()      # Tên của em
-POLL_MINUTES = int(os.environ.get("POLL_MINUTES") or "10")     # Số phút online trả lời tin
-MEMORY_LIMIT = int(os.environ.get("MEMORY_LIMIT") or "20")     # Nhớ tối đa N tin gần nhất
+POLL_MINUTES = int(os.environ.get("POLL_MINUTES") or "1440")     # Số phút online trả lời tin
+MEMORY_LIMIT = int(os.environ.get("MEMORY_LIMIT") or "20000")     # Nhớ tối đa N tin gần nhất
 
 DRY_RUN = os.environ.get("DRY_RUN", "").lower() in ("1", "true", "yes")
 
